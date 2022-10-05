@@ -7,11 +7,12 @@
 int main(int argc, char** argv){
     srand(time(0));
     // Set playername
-    char* playername = argv[0];
-    playername = argv[1] != NULL ? argv[1]: "Default Name";
+    struct player player;
+    player.health = 20;
+    player.name = argv[1] != NULL ? argv[1]: "Default Name";
 
     //window setup functions;
-    int x,y,nx,ny;
+    int nx,ny;
     int mx=0,my=0;
     WINDOW *win = initscr();
     getmaxyx(win,my,mx);
@@ -32,13 +33,14 @@ int main(int argc, char** argv){
     getch();
 
     //Welcome Code
-    textDisplayWS("Welcome Knight %s",win, playername);
+    textDisplayWS("Welcome Knight %s",win, player.name);
 
+    int enemymove = 0;
     //game loop
     for (;;){
         //Movement/Action Code
-        x = getcurx(rooms[currentRoom].win)-1; nx = x;
-        y = getcury(rooms[currentRoom].win); ny = y;
+        player.x = getcurx(rooms[currentRoom].win)-1; nx = player.x;
+        player.y = getcury(rooms[currentRoom].win); ny = player.y;
 	    getmaxyx(rooms[currentRoom].win,my,mx);	
         switch(getch()){
             //Move Up
@@ -67,7 +69,7 @@ int main(int argc, char** argv){
             }
             //Open A Door
         case '.':{
-                if (x == rooms[currentRoom].door[0][1] && y - 1 == rooms[currentRoom].door[0][0]){
+                if (player.x == rooms[currentRoom].door[0][1] && player.y - 1 == rooms[currentRoom].door[0][0]){
                     wclear(win);
                     currentRoom++;
                     if(rooms[currentRoom].height == 0){
@@ -75,34 +77,55 @@ int main(int argc, char** argv){
                         textDisplay("test",win);
                     }
                     ny = rooms[currentRoom].door[1][0]-1; nx = rooms[currentRoom].door[1][1];
-                    y=ny;x=nx;
+                    player.y=ny;player.x=nx;
                     wrefresh(rooms[currentRoom-1].win);
                     wrefresh(win);
                     getmaxyx(rooms[currentRoom].win,my,mx);
                     textDisplay("The Door slowly opens, into another cavernous room",win);
                 }
-                else if (x == rooms[currentRoom].door[1][1] && y + 1 == rooms[currentRoom].door[1][0]){
+                else if (player.x == rooms[currentRoom].door[1][1] && player.y + 1 == rooms[currentRoom].door[1][0]){
                     wclear(win);
                     currentRoom--;
                     ny = rooms[currentRoom].door[0][0]+1; nx = rooms[currentRoom].door[0][1];
-                    y=ny;x=nx;
+                    player.y=ny;player.x=nx;
                     wrefresh(win);
                     getmaxyx(rooms[currentRoom].win,my,mx);
                     textDisplay("The Door slowly opens, into another cavernous room",win);
                 }
                 break;
+            }
+            //Attack
+        case '\'':{
+                wclear(rooms[currentRoom].win);
+                for (int i = 0; i < rooms[currentRoom].enemyAmount; i++)
+                    if(rooms[currentRoom].enemies[i].x <= player.x + 1 && rooms[currentRoom].enemies[i].x >= player.x - 1
+                    && rooms[currentRoom].enemies[i].y <= player.y + 1 && rooms[currentRoom].enemies[i].y >= player.y + 1)
+                        rooms[currentRoom].enemies[i].health-=5;
+                enemiesRemove(&rooms[currentRoom]);
+                textDisplay("You attack and hit a monster",win);
+            } 
         }
+        enemymove++;
+        if (enemymove == 2){
+            enemymove = 0;
+            enemyMovement(&rooms[currentRoom], &player);
         }
         if (nx >= mx-1 || nx < 1 || ny >= my-1 || ny < 1)
-            drawWindow(rooms[currentRoom],x,y);
+            drawWindow(rooms[currentRoom],player.x,player.y);
         else
             drawWindow(rooms[currentRoom],nx,ny);
+        inventoryDisplay(player, win);
+        
+
+        if(player.health <= 0){
+            textDisplay("YOU DIED.",win);
+            getch();
+            break;
+        }
+
     }
 
     endwin();
     return 0;
 }
 
-WINDOW *createRoom(struct room room){
-
-}
