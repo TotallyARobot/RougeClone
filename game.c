@@ -10,6 +10,7 @@ int main(int argc, char** argv){
     struct player player;
     player.health = 20;
     player.name = argv[1] != NULL ? argv[1]: "Default Name";
+    player.Inventoryp = 0;
 
     //window setup functions;
     int nx,ny;
@@ -18,6 +19,7 @@ int main(int argc, char** argv){
     getmaxyx(win,my,mx);
     struct room rooms[50] = {0,0};
     int currentRoom = 0;
+    rooms[0].enemyAmount = -1;
     rooms[0].width = 10;
     rooms[0].height = 10;
     rooms[0].door[0][0] = 0;
@@ -99,11 +101,26 @@ int main(int argc, char** argv){
                 wclear(rooms[currentRoom].win);
                 for (int i = 0; i < rooms[currentRoom].enemyAmount; i++)
                     if(rooms[currentRoom].enemies[i].x <= player.x + 1 && rooms[currentRoom].enemies[i].x >= player.x - 1
-                    && rooms[currentRoom].enemies[i].y <= player.y + 1 && rooms[currentRoom].enemies[i].y >= player.y + 1)
+                    && rooms[currentRoom].enemies[i].y <= player.y + 1 && rooms[currentRoom].enemies[i].y >= player.y - 1)
                         rooms[currentRoom].enemies[i].health-=5;
                 enemiesRemove(&rooms[currentRoom]);
                 textDisplay("You attack and hit a monster",win);
+                if(rooms[currentRoom].enemyAmount == 0){ 
+                    int itemval = rand() % 5 + 1;
+                    player.Inventory[player.Inventoryp] = 0x0100;
+                    player.Inventory[player.Inventoryp] += itemval;
+                    player.Inventoryp++;
+                    rooms[currentRoom].enemyAmount = -1;
+                }
+                break;
             } 
+            //Quick Use Inventory
+        case 'i':{
+            player.health += player.Inventory[0] - 0x0100;
+            for (int i = 0; i < player.Inventoryp; i++)
+                player.Inventory[i] = player.Inventory[i+1];
+            player.Inventoryp--;
+            }
         }
         enemymove++;
         if (enemymove == 2){

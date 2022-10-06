@@ -19,9 +19,15 @@ struct room{
 
 struct player{
     int x,y,health;
-    int* inventory;
     char* name;
+    unsigned short int Inventory[16];
+    unsigned short int Inventoryp;
 };
+
+char* readItem(int item){
+    if(item < 0x0200 && item > 0x0100)
+        return "Heal Pot";
+}
 
 void drawWindow(struct room room, int x, int y){
     box(room.win,0,0);
@@ -47,8 +53,8 @@ void enemyMovement(struct room *room, struct player *player){
                 room->enemies[i].y++;
 
         mvwaddch(room->win,room->enemies[i].y,room->enemies[i].x,room->enemies[i].icon);
-        if(room->enemies[i].x <= player->x + 1 && room->enemies[i].x >= player->x -1
-                         && room->enemies[i].y <= player->y + 1 && room->enemies[i].y >= player->y + 1)
+        if(room->enemies[i].x <= player->x + 1 && room->enemies[i].x >= player->x - 1
+        && room->enemies[i].y <= player->y + 1 && room->enemies[i].y >= player->y - 1)
                             player->health--;
     }
 }
@@ -66,6 +72,10 @@ void inventoryDisplay(struct player player, WINDOW *rootwin){
     wmove(tempwin,1,1);
     box(tempwin,0,0);
     wprintw(tempwin,"Health: %i", player.health);
+    for (int i = 0; i < player.Inventoryp; i++){
+        wmove(tempwin,i+2,1);
+        wprintw(tempwin,"%s: %i", readItem(player.Inventory[i]), player.Inventory[i]-0x0100);
+    }
     wrefresh(tempwin);
 }
 
@@ -89,7 +99,7 @@ WINDOW* newRandomRoom(int mx, int my, struct room *Room){
     for(int i = 0; i < Room->enemyAmount; i++){
         Room->enemies[i].x = rand() % Room->width + 1;
         Room->enemies[i].y = rand() % Room->height + 1;
-        Room->enemies[i].health = rand() % 10 + 5;
+        Room->enemies[i].health = rand() % 7 + 5;
         Room->enemies[i].icon = rand() % 5 + 97;
         Room->enemies[i].name = "Goblin";
     }
@@ -112,4 +122,3 @@ void enemiesRemove(struct room *room){
 
     }
 }
-
