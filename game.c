@@ -9,6 +9,7 @@ int main(int argc, char** argv){
     // Set playername
     struct player player;
     player.health = 20;
+    player.arrows = 30;
     player.name = argv[1] != NULL ? argv[1]: "Default Name";
     player.Inventoryp = 0;
 
@@ -98,13 +99,7 @@ int main(int argc, char** argv){
             }
             //Attack
         case '\'':{
-                wclear(rooms[currentRoom].win);
-                for (int i = 0; i < rooms[currentRoom].enemyAmount; i++)
-                    if(rooms[currentRoom].enemies[i].x <= player.x + 1 && rooms[currentRoom].enemies[i].x >= player.x - 1
-                    && rooms[currentRoom].enemies[i].y <= player.y + 1 && rooms[currentRoom].enemies[i].y >= player.y - 1)
-                        rooms[currentRoom].enemies[i].health-=5;
-                enemiesRemove(&rooms[currentRoom]);
-                textDisplay("You attack and hit a monster",win);
+                attackView(&rooms[currentRoom],&player,win);
                 if(rooms[currentRoom].enemyAmount == 0){ 
                     int itemval = rand() % 5 + 1;
                     player.Inventory[player.Inventoryp] = 0x0100;
@@ -112,14 +107,40 @@ int main(int argc, char** argv){
                     player.Inventoryp++;
                     rooms[currentRoom].enemyAmount = -1;
                 }
+                wclear(rooms[currentRoom].win);
                 break;
-            } 
+            }
+
+        //case '\'':{
+        //        wclear(rooms[currentRoom].win);
+        //        for (int i = 0; i < rooms[currentRoom].enemyAmount; i++)
+        //            if(rooms[currentRoom].enemies[i].x <= player.x + 1 && rooms[currentRoom].enemies[i].x >= player.x - 1
+        //            && rooms[currentRoom].enemies[i].y <= player.y + 1 && rooms[currentRoom].enemies[i].y >= player.y - 1){
+        //                rooms[currentRoom].enemies[i].health-=5;
+        //                textDisplay("You attack and hit a monster",win);
+        //            }
+        //        enemiesRemove(&rooms[currentRoom], win);
+        //        if(rooms[currentRoom].enemyAmount == 0){ 
+        //            int itemval = rand() % 5 + 1;
+        //            player.Inventory[player.Inventoryp] = 0x0100;
+        //            player.Inventory[player.Inventoryp] += itemval;
+        //            player.Inventoryp++;
+        //            rooms[currentRoom].enemyAmount = -1;
+        //        }
+        //        break;
+        //    } 
+
+
             //Quick Use Inventory
         case 'i':{
             player.health += player.Inventory[0] - 0x0100;
             for (int i = 0; i < player.Inventoryp; i++)
                 player.Inventory[i] = player.Inventory[i+1];
             player.Inventoryp--;
+            break;
+            }
+        default:{
+            wclear(rooms[currentRoom].win);
             }
         }
         enemymove++;

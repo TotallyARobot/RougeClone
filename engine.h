@@ -20,6 +20,7 @@ struct room{
 struct player{
     int x,y,health;
     char* name;
+    int arrows;
     unsigned short int Inventory[16];
     unsigned short int Inventoryp;
 };
@@ -72,8 +73,10 @@ void inventoryDisplay(struct player player, WINDOW *rootwin){
     wmove(tempwin,1,1);
     box(tempwin,0,0);
     wprintw(tempwin,"Health: %i", player.health);
+    wmove(tempwin,2,1);
+    wprintw(tempwin,"Arrows: %i", player.arrows);
     for (int i = 0; i < player.Inventoryp; i++){
-        wmove(tempwin,i+2,1);
+        wmove(tempwin,i+3,1);
         wprintw(tempwin,"%s: %i", readItem(player.Inventory[i]), player.Inventory[i]-0x0100);
     }
     wrefresh(tempwin);
@@ -107,7 +110,7 @@ WINDOW* newRandomRoom(int mx, int my, struct room *Room){
     return newwin(Room->height+2, Room->width+2, my/2-Room->height/2, mx/2-Room->width/2);
 }
 
-void enemiesRemove(struct room *room){
+void enemiesRemove(struct room *room, WINDOW *win){
     for(int i = 0; i < room->enemyAmount; i++){
         if(room->enemies[i].health <= 0){
             for(int w = i; w < room->enemyAmount; w++){
@@ -118,7 +121,54 @@ void enemiesRemove(struct room *room){
                 room->enemies[w].y = room->enemies[w+1].y; 
             }
             room->enemyAmount--;
+            textDisplay("The Monster you were attacking is dead!", win);
         }
 
+    }
+}
+
+void attackView(struct room *room, struct player *player, WINDOW *rootwin){
+    wmove(room->win,player->x,player->y);
+    int nx = player->x;
+    int ny = player->y;
+    mvwaddch(room->win,ny,nx,'K');
+    for(;;){
+        char ch = getch();
+        if (ch == ',')
+            ny--;
+        else if (ch == 'a')
+            nx--;
+        else if (ch == 'o')
+            ny++;
+        else if (ch == 'e')
+            nx++;
+        else if (ch == '.' && (mvwinch(room->win, ny-1, nx) & A_CHARTEXT) >= 96 && (mvwinch(room->win, ny-1, nx) & A_CHARTEXT) <= 102 && player->arrows > 0){
+            for(int i = 0; i < room->enemyAmount; i++)
+                if(room->enemies[i].x == nx && room->enemies[i].y == ny-1){
+                    room->enemies[i].health-=5;
+                    textDisplay("You shoot at the monster peirceing through sinu and bone", rootwin);
+                    enemiesRemove(room, rootwin);
+                    player->arrows--;
+                    break;
+                }
+            break;
+        }
+        else if (ch == '.' && (mvwinch(room->win, ny-1, nx) & A_CHARTEXT) >= 96 && (mvwinch(room->win, ny-1, nx) & A_CHARTEXT) <= 102 &&
+                 abs(ny-player->y) < 1 && abs(ny-player->x) < 1){
+            for(int i = 0; i < room->enemyAmount; i++)
+                if(room->enemies[i].x == nx && room->enemies[i].y == ny-1){
+                    room->enemies[i].health-=5;
+                    textDisplay("You attack the monster slashing through sinu and bone", rootwin);
+                    enemiesRemove(room, rootwin);
+                    break;
+                }
+            break;
+        }
+        else
+            break;
+        wclear(room->win);
+        drawWindow(*room,player->x,player->y);
+        mvwaddch(room->win,ny,nx,'^');
+        wrefresh(room->win);
     }
 }
